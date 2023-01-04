@@ -1,2 +1,4 @@
 /migrations/
 /venv/
+*.db
+__pycache__
