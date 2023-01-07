@@ -8,13 +8,16 @@ def get_f(item):
         return item.to_dict()
     else: return {}
 
+def hash_pas(password:str):
+    return password + "notreallyhashed"
+
 #       USER
 
 def create_user(db: Session, user: schemas.UserCreate):
     """
     Добавление нового пользователя
     """
-    fake_hashed_password = user.password + "notreallyhashed"
+    fake_hashed_password = hash_pas(user.password)
     db_user = models.User(email=user.email, hashed_password=fake_hashed_password)
     db.add(db_user)
     db.commit()
@@ -41,6 +44,13 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     """
     return db.query(models.User).offset(skip).limit(limit).all()
 
+def update_user(db:Session,id:int, h_password:str, is_active):
+    user = get_user(db,id)
+    user.hashed_password = h_password
+    user.is_active = is_active
+    db.commit()
+    db.refresh(user)
+    return user
 #       ROLES
 
 def create_role(db: Session, role: schemas.RoleBase):
@@ -72,3 +82,20 @@ def get_role_by_name(db:Session, name:str):
 
 def get_user_roles(db:Session, id_user:int):
     return db.query(models.Roles_for_users).filter(models.Roles_for_users.user_id == id_user).all()
+
+#           CANDLES
+
+def create_candle(db:Session, ca:schemas.CandlesBase):
+    db_r = models.Candles(life_time = ca.life_time, candle_type_id = ca.candle_type_id,user_id = ca.user_id)
+    db.add(db_r)
+    db.commit()
+    db.refresh(db_r)
+    return db_r
+
+def get_candle(db:Session, ca_id: int):
+    return db.query(models.Candles).filter(models.Candles.id == ca_id).first()
+
+def update_candle(db:Session,ca: models.Candles):
+    db.commit()
+    db.refresh(ca)
+    return ca

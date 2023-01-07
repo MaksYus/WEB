@@ -34,12 +34,12 @@ class History(HistoryBase):
 
 class CandlesBase(BaseModel): #для создания использовать этот
     life_time: int
-    date_start: datetime.datetime
     candle_type_id: int
     user_id: int
 
 class Candles(CandlesBase):
     is_burn: bool
+    date_start: datetime.datetime
     id: int
     class Config:
         orm_mode = True
