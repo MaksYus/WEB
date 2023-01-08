@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Date
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship, declarative_base
 
 
@@ -31,7 +31,7 @@ class User(BaseModel):
 class History(BaseModel):
     __tablename__ = "history"
 
-    date = Column(Date)
+    date = Column(DateTime)
     fild_name = Column(String)
     old_val = Column(String)
     new_val = Column(String)
@@ -46,8 +46,8 @@ class Candles(BaseModel):
     __tablename__ = "candles"
 
     life_time = Column(Integer,nullable=False)
-    is_burn = Column(Boolean, default=True,nullable=False)
-    date_start = Column(Date)
+    is_burn = Column(Boolean, default=False,nullable=False)
+    date_start = Column(DateTime)
 
     candle_type_id = Column(Integer, ForeignKey("candle_type.id"),nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))

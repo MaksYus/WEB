@@ -146,6 +146,33 @@ def remove_candle(candle_id:int , db:Session = Depends(get_db)):
     res = crud.update_candle(db,ca)
     return res
 
+@app.post('/candle/burn/')
+def candle_burn(candle_id:int,db:Session = Depends(get_db)):
+    """
+    """
+    ca = crud.get_candle(db,candle_id)
+    if ca is None:
+        raise HTTPException(status_code=404, detail='candle not found')
+    ca.is_burn = 1
+    ca.date_start = datetime.datetime.now()
+    res = crud.update_candle(db,ca)
+    return res
+
+@app.post('/candle/unburn/')
+def candle_unburn(candle_id:int, db:Session = Depends(get_db)):
+    """
+    """
+    ca = crud.get_candle(db,candle_id)
+    if ca is None:
+        raise HTTPException(status_code=404, detail='candle not found')
+    if ca.is_burn == 1:
+        raise HTTPException(status_code=405, detail='candle is unburn')
+    ca.is_burn = 0
+    delta:datetime.timedelta = (datetime.datetime.now() - ca.date_start)
+    ca.life_time -= delta.days*24*3600 - delta.seconds
+    res = crud.update_candle(db,ca)
+    return res
+    
 # авторизация
 # регистрация
 # добавление роли
