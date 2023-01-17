@@ -1,0 +1,9 @@
+.form_upper_block{
+    text-align: right;
+    margin: 0 auto;
+    background: url("images/back.png");
+    background-size: cover;
+}
+.form_main_block_content{
+  padding-top: 15%;
+}

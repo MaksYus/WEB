@@ -3,7 +3,7 @@ from typing import Union, List
 import datetime
 
 class UserBase(BaseModel):
-    email: str
+    login: str
 
 
 class UserCreate(UserBase):

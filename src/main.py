@@ -1,16 +1,27 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
+from starlette.middleware.cors import CORSMiddleware
+
 import datetime
 import uvicorn
 from typing import List
 
 from src import crud, models, schemas
 from src.database import SessionLocal, engine
+import json
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 if __name__ == '__main__':
     uvicorn.run(app,host='0.0.0.0', port=8000) # pragma: no cover
@@ -32,9 +43,9 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     Создание пользователя
     """
-    db_user = crud.get_user_by_email(db, email=user.email)
+    db_user = crud.get_user_by_login(db, login=user.login)
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="login already registered")
     return crud.create_user(db=db, user=user)
 
 
@@ -68,11 +79,11 @@ def read_role_by_user(user_id: int, db: Session = Depends(get_db)):
     return db_role
 
 @app.post('/roles/')
-def add_role_for_user(user_email:str, role_name:str,db: Session = Depends(get_db)):
+def add_role_for_user(user_login:str, role_name:str,db: Session = Depends(get_db)):
     """
     Добавление роли нужному пользователю
     """
-    db_user = crud.get_user_by_email(db, email=user_email)
+    db_user = crud.get_user_by_login(db, login=user_login)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     db_role = crud.get_role_by_name(db,name = role_name)
@@ -83,45 +94,49 @@ def add_role_for_user(user_email:str, role_name:str,db: Session = Depends(get_db
     return db_role_for_user
 
 @app.post('/user/auth/')
-def auth(email:str, password:str,db: Session = Depends(get_db)):
+def auth(login:str, password:str,db: Session = Depends(get_db)):
     """
     авторизация
     """
     hashed_pas = crud.hash_pas(password)
-    user = crud.get_user_by_email(db,email)
+    user = crud.get_user_by_login(db,login)
     if user is None:
         raise HTTPException(status_code=400, detail="login or password wrong")
     if user.hashed_password != hashed_pas:
         raise HTTPException(status_code=400, detail="login or password wrong")
     if user.is_active:
         raise HTTPException(status_code=400, detail="user already logged")
-    res = crud.update_user(db,user.id,hashed_pas,1)
+    token = user.login + 'FAKETOKEN'
+    res = crud.update_user(db,user.id,hashed_pas,1,token=token)
 
 @app.post('/user/unlog/')
-def unlog(email:str,db:Session = Depends(get_db)):
+def unlog(login:str,token:str,db:Session = Depends(get_db)):
     """
     разлогиниться
     """
-    user = crud.get_user_by_email(db,email)
+    user = crud.get_user_by_login(db,login)
     if user is None:
         raise HTTPException(status_code=404, detail="user not found")
+    if token != user.token:
+        raise HTTPException(status_code=400, detail= 'token is unvalid')
     if not user.is_active:
         raise HTTPException(status_code=400, detail="user already unlogged")
+    
     res = crud.update_user(db,user.id,user.hashed_password,0)
 
 @app.post('/user/register/')
 def register(new_user: schemas.UserCreate, db:Session = Depends(get_db)):
     """
     """
-    user = crud.get_user_by_email(email=new_user.email,db=db)
+    user = crud.get_user_by_login(login=new_user.login,db=db)
     if not (user is None):
         raise HTTPException(status_code=400, detail='user already exists')
     us = crud.create_user(db=db,user=new_user)
-    rol = add_role_for_user(user_email=us.email,role_name='User',db=db)
+    rol = add_role_for_user(user_login=us.login,role_name='User',db=db)
     return us
 
 @app.post('/candle/add/')
-def add_candle(new_candle:schemas.CandlesBase, db:Session = Depends(get_db)):
+def add_candle(new_candle:schemas.CandlesBase,token:str, db:Session = Depends(get_db)):
     """
     """
     if new_candle.life_time <= 0 :
@@ -129,11 +144,13 @@ def add_candle(new_candle:schemas.CandlesBase, db:Session = Depends(get_db)):
     user_db = crud.get_user(db,new_candle.user_id)
     if user_db is None:
         raise HTTPException(status_code=404, detail='user not found')
+    if token != user_db.token:
+        raise HTTPException(status_code=400, detail= 'token is unvalid')
     res = crud.create_candle(db=db,ca=new_candle)
     return res
 
 @app.post('/candle/remove/')
-def remove_candle(candle_id:int , db:Session = Depends(get_db)):
+def remove_candle(candle_id:int, db:Session = Depends(get_db)):
     """
     """
     ca = crud.get_candle(db,candle_id)

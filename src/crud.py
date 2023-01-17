@@ -18,7 +18,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     Добавление нового пользователя
     """
     fake_hashed_password = hash_pas(user.password)
-    db_user = models.User(email=user.email, hashed_password=fake_hashed_password)
+    db_user = models.User(login=user.login, hashed_password=fake_hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -30,11 +30,11 @@ def get_user(db: Session, user_id: int):
     """
     return db.query(models.User).filter(models.User.id == user_id).first()
 
-def get_user_by_email(db: Session, email: str):
+def get_user_by_login(db: Session, login: str):
     """
-    Получить пользователя по его email
+    Получить пользователя по его login
     """
-    return db.query(models.User).filter(models.User.email == email).first()
+    return db.query(models.User).filter(models.User.login == login).first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     """
@@ -44,10 +44,11 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     """
     return db.query(models.User).offset(skip).limit(limit).all()
 
-def update_user(db:Session,id:int, h_password:str, is_active):
+def update_user(db:Session,id:int, h_password:str, is_active:int, token:str):
     user = get_user(db,id)
     user.hashed_password = h_password
     user.is_active = is_active
+    user.token = token
     db.commit()
     db.refresh(user)
     return user

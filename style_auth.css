@@ -42,7 +42,7 @@ input:focus {
   border-radius: 10px;
   border: 2px solid #436fea;
 }
-.form_auth_button{
+.form_button{
     display: block;
     width: 80%;
     margin: 0 auto;
