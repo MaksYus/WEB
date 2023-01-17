@@ -38,7 +38,7 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/users/")
+@app.post("/users/register/")
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     Создание пользователя
@@ -94,20 +94,21 @@ def add_role_for_user(user_login:str, role_name:str,db: Session = Depends(get_db
     return db_role_for_user
 
 @app.post('/user/auth/')
-def auth(login:str, password:str,db: Session = Depends(get_db)):
+def auth(user: schemas.UserCreate,db: Session = Depends(get_db)):
     """
     авторизация
     """
-    hashed_pas = crud.hash_pas(password)
-    user = crud.get_user_by_login(db,login)
-    if user is None:
+    hashed_pas = crud.hash_pas(user.password)
+    user_db = crud.get_user_by_login(db,user.login)
+    if user_db is None:
         raise HTTPException(status_code=400, detail="login or password wrong")
-    if user.hashed_password != hashed_pas:
+    if user_db.hashed_password != hashed_pas:
         raise HTTPException(status_code=400, detail="login or password wrong")
-    if user.is_active:
+    if user_db.is_active:
         raise HTTPException(status_code=400, detail="user already logged")
-    token = user.login + 'FAKETOKEN'
-    res = crud.update_user(db,user.id,hashed_pas,1,token=token)
+    token = user_db.login + 'FAKETOKEN'
+    res = crud.update_user(db,user_db.id,hashed_pas,1,token=token)
+    return res
 
 @app.post('/user/unlog/')
 def unlog(login:str,token:str,db:Session = Depends(get_db)):
@@ -122,7 +123,8 @@ def unlog(login:str,token:str,db:Session = Depends(get_db)):
     if not user.is_active:
         raise HTTPException(status_code=400, detail="user already unlogged")
     
-    res = crud.update_user(db,user.id,user.hashed_password,0)
+    res = crud.update_user(db,user.id,user.hashed_password,0,'')
+    return res
 
 @app.post('/user/register/')
 def register(new_user: schemas.UserCreate, db:Session = Depends(get_db)):

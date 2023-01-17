@@ -21,13 +21,13 @@ class BaseModel(Base):
 class User(BaseModel):
     __tablename__ = "users"
 
-    email = Column(String, unique=True, index=True,nullable=False)
+    login = Column(String, unique=True, index=True,nullable=False)
     hashed_password = Column(String,nullable=False)
     is_active = Column(Boolean, default=False,nullable=False)
     token = Column(String,unique=True)
 
     def to_dict(self) -> dict:
-        return {'id': self.id,'email': self.email, 'hashed_password': self.hashed_password, 'is_active':self.is_active}
+        return {'id': self.id,'login': self.login, 'hashed_password': self.hashed_password, 'is_active':self.is_active}
 
 class History(BaseModel):
     __tablename__ = "history"
