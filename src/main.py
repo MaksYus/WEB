@@ -111,19 +111,17 @@ def auth(user: schemas.UserCreate,db: Session = Depends(get_db)):
     return res
 
 @app.post('/user/unlog/')
-def unlog(login:str,token:str,db:Session = Depends(get_db)):
+def unlog(token:str,db:Session = Depends(get_db)):
     """
     разлогиниться
     """
-    user = crud.get_user_by_login(db,login)
+    user = crud.get_user_by_token(db,token)
     if user is None:
-        raise HTTPException(status_code=404, detail="user not found")
-    if token != user.token:
-        raise HTTPException(status_code=400, detail= 'token is unvalid')
+        raise HTTPException(status_code=404, detail="user not found or already logout")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="user already unlogged")
     
-    res = crud.update_user(db,user.id,user.hashed_password,0,'')
+    res = crud.update_user(db,user.id,user.hashed_password,0,user.login)
     return res
 
 @app.post('/user/register/')

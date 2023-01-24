@@ -27,7 +27,7 @@ class User(BaseModel):
     token = Column(String,unique=True)
 
     def to_dict(self) -> dict:
-        return {'id': self.id,'login': self.login, 'hashed_password': self.hashed_password, 'is_active':self.is_active}
+        return {'id': self.id,'login': self.login, 'hashed_password': self.hashed_password, 'is_active':self.is_active, 'token':self.token}
 
 class History(BaseModel):
     __tablename__ = "history"

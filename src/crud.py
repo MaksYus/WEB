@@ -36,6 +36,12 @@ def get_user_by_login(db: Session, login: str):
     """
     return db.query(models.User).filter(models.User.login == login).first()
 
+def get_user_by_token(db: Session, token: str):
+    """
+    Получить пользователя по его token
+    """
+    return db.query(models.User).filter(models.User.token == token).first()
+
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     """
     Получить список пользователей из БД

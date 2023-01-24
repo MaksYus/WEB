@@ -48,7 +48,10 @@ jQuery(document).ready(function($){
         };
         createPost(newPost,response => {
             console.log(response);
-            if(response['detail']){alert(response['detail']);};
+            if(response['detail']){alert(response['detail']);}
+            else{
+                window.location.href = 'main_page.html?token='+response['token'];
+            }
         },"http://127.0.0.1:8000/user/auth");
     });
 

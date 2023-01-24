@@ -1,0 +1,23 @@
+.form_upper_block{
+    text-align: right;
+    margin: 0 auto;
+    background-size: cover;
+}
+.form_button{
+  border-radius: 10px;
+  height: 30px;
+  border: none;
+  cursor: pointer;
+}
+.form_main_block{
+  width: 500px;
+  height: 500px;
+  text-align: center;
+  margin: 0 auto;
+  background: url("images/back.png");
+  background-size: cover;
+}
+.form_control_block{
+  text-align: center;
+  margin: 0 auto;
+}
