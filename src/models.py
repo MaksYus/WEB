@@ -49,12 +49,13 @@ class Candles(BaseModel):
     life_time = Column(Integer,nullable=False)
     is_burn = Column(Boolean, default=False,nullable=False)
     date_start = Column(DateTime)
+    in_user_interface = Column(Integer)
 
     candle_type_id = Column(Integer, ForeignKey("candle_type.id"),nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))
 
     def to_dict(self) -> dict:
-        return {'id': self.id,'life_time': self.life_time, 'is_burn': self.is_burn, 'date_start':self.date_start, 'candle_type_id':self.candle_type_id, 'user_id':self.user_id}
+        return {'id': self.id,'life_time': self.life_time, 'is_burn': self.is_burn, 'date_start':self.date_start, 'candle_type_id':self.candle_type_id, 'user_id':self.user_id, 'in_user_interface':self.in_user_interface}
 
 class Candle_Type(BaseModel):
     __tablename__ = "candle_type"

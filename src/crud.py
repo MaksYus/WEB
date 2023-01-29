@@ -90,6 +90,12 @@ def get_role_by_name(db:Session, name:str):
 def get_user_roles(db:Session, id_user:int):
     return db.query(models.Roles_for_users).filter(models.Roles_for_users.user_id == id_user).all()
 
+def get_components_id_by_role(db:Session, id_role:int):
+    return db.query(models.Role_Access).filter(models.Role_Access.role_id==id_role).all()
+
+def get_component(db:Session, id:int):
+    return db.query(models.Component).filter(models.Component.id==id).first()
+
 #           CANDLES
 
 def create_candle(db:Session, ca:schemas.CandlesBase):
@@ -99,10 +105,17 @@ def create_candle(db:Session, ca:schemas.CandlesBase):
     db.refresh(db_r)
     return db_r
 
-def get_candle(db:Session, ca_id: int):
+def get_candle_by_id(db:Session, ca_id: int):
     return db.query(models.Candles).filter(models.Candles.id == ca_id).first()
+
+def get_candles_by_user(db:Session, user_id: int):
+    return db.query(models.Candles).filter(models.Candles.user_id == user_id).all()
+
+def get_candles_all(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Candles).offset(skip).limit(limit).all()
 
 def update_candle(db:Session,ca: models.Candles):
     db.commit()
     db.refresh(ca)
     return ca
+    

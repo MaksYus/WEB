@@ -41,6 +41,7 @@ class Candles(CandlesBase):
     is_burn: bool
     date_start: datetime.datetime
     id: int
+    in_user_interface: int
     class Config:
         orm_mode = True
 

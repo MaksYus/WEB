@@ -16,9 +16,9 @@ function createPost(body,cb,url){
     xhr.send(JSON.stringify(body));
 }
 
-function createGet(cb){
+function createGet(cb,url){
     const xhr = new XMLHttpRequest();
-    xhr.open("GET","http://127.0.0.1:8000/users/1");
+    xhr.open("GET",url);
     xhr.addEventListener('load',() => {
         const response = JSON.parse(xhr.responseText);
         cb(response);
@@ -33,7 +33,6 @@ function createGet(cb){
     });
     xhr.send();
 }
-
 jQuery(document).ready(function($){
 
     const btn_auth = document.querySelector('.btn_auth')
