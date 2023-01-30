@@ -87,7 +87,7 @@ btn_add.addEventListener('click',e => {
             alert(response["detail"]);
         }
         else{
-            alert("candle pasted");
+            document.getElementById('candle'+wr_id).style.visibility = 'visible';
         }
     },"http://127.0.0.1:8000/candle/add_to_user?in_user_int="+wr_id);
 });
@@ -106,7 +106,7 @@ btn_burn.addEventListener('click',e => {
                alert(response2['detail']);
             }
             else{
-            alert('burned');
+                document.getElementById('flame'+wr_id).style.visibility = 'visible';
             }
             },"http://127.0.0.1:8000/candle/burn/"+response['id']+"?user_id="+user['id']);
         }
@@ -127,7 +127,7 @@ btn_unburn.addEventListener('click',e => {
                alert(response2['detail']);
             }
             else{
-            alert('unburned');
+                document.getElementById('flame'+wr_id).style.visibility = 'hidden';
             }
             },"http://127.0.0.1:8000/candle/unburn/"+response['id']+"?user_id="+user['id']);
         }
@@ -149,7 +149,8 @@ btn_rem.addEventListener('click',e => {
                alert(response2['detail']);
             }
             else{
-            alert('removed');
+                document.getElementById('candle'+wr_id).style.visibility = 'hidden';
+                document.getElementById('flame'+wr_id).style.visibility = 'hidden';
             }
             },"http://127.0.0.1:8000/candle/remove/"+response['id']+"?user_id="+user['id']);
         }

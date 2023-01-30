@@ -21,3 +21,44 @@
   text-align: center;
   margin: 0 auto;
 }
+.candle_main{
+  position: relative;
+  width: 10%;
+  z-index: 1;
+}
+.form_candle_left{
+  visibility: hidden;
+  right: 17.5%;
+  top:4.5%;
+}
+.form_candle_centre{
+  visibility: hidden;
+  right: 1%;
+  top: 2.5%;
+}
+.form_candle_right{
+  visibility: hidden;
+  left: 16%;
+  top: 7%;
+}
+
+.flame_main{
+  position: relative;
+  width: 5%;
+  z-index: 2;
+}
+.form_flame_left{
+  visibility: hidden;
+  right: 23%;
+  top:-29%;
+}
+.form_flame_centre{
+  visibility: hidden;
+  right: 1.5%;
+  top:-31%;
+}
+.form_flame_right{
+  visibility: hidden;
+  left: 20.5%;
+  top:-27%;
+}
