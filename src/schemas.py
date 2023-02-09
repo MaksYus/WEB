@@ -17,15 +17,16 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
+    token: str
     class Config:
         orm_mode = True
 
 class HistoryBase(BaseModel): #для создания использовать этот
-    date: datetime.datetime
+    date_changes: datetime.datetime
     fild_name: str
     old_val: str
     new_val: str
-    user_id: int
+    description: str
 
 class History(HistoryBase):
     id: int
@@ -85,5 +86,12 @@ class Role_AccessBase(BaseModel):
 
 class Role_Access(Role_AccessBase):
     id: int
+    class Config:
+        orm_mode = True
+
+class Message(BaseModel):
+    id: int
+    text: str
+    user_id: int
     class Config:
         orm_mode = True

@@ -18,7 +18,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     Добавление нового пользователя
     """
     fake_hashed_password = hash_pas(user.password)
-    db_user = models.User(login=user.login, hashed_password=fake_hashed_password)
+    db_user = models.User(login=user.login, hashed_password=fake_hashed_password, token=user.login)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -118,4 +118,20 @@ def update_candle(db:Session,ca: models.Candles):
     db.commit()
     db.refresh(ca)
     return ca
-    
+
+# HISTORY
+
+def create_history(db:Session, ca:schemas.HistoryBase):
+    db_r = models.History(date_changes = ca.date_changes,description=ca.description, fild_name = ca.fild_name, old_val = ca.old_val, new_val = ca.new_val)
+    db.add(db_r)
+    db.commit()
+    db.refresh(db_r)
+    return db_r
+
+def get_history_all(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.History).offset(skip).limit(limit).all()
+
+def update_history(db:Session,ca: models.History):
+    db.commit()
+    db.refresh(ca)
+    return ca

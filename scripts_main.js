@@ -51,6 +51,9 @@ function createGet(cb,url){
 }
 
 user = {};
+user_components = {};
+
+// инициализация пользователя
 createGet(response => {
     console.log(response);
     if(response['detail']){
@@ -59,8 +62,22 @@ createGet(response => {
     else{
         user = response;
         p.innerHTML = 'User: ' + String(user['login']);
+        // инициализация компонент пользователя
+        createGet(response => {
+            console.log(response);
+            if(response['detail']){
+                alert(response['detail']);
+            }
+            else{
+                user_components = response['components'];
+            }
+        },"http://127.0.0.1:8000/user/components/"+user['id']);
+
     }
 },"http://127.0.0.1:8000/user_by_token/"+Token);
+
+
+
 
 btn_logout.addEventListener('click',e => {
     createGet(response => {
@@ -76,11 +93,11 @@ btn_logout.addEventListener('click',e => {
 
 btn_add.addEventListener('click',e => {
     wr_id = document.querySelector('.index_input').value
-    const newPost = {
+    const newPost = {'new_candle':{
         'life_time':3600,
         'candle_type_id':1,
         'user_id':user['id']
-    };
+    },'components':user_components};
     createPost(newPost,response => {
         console.log(response);
         if(response["detail"]){
@@ -100,7 +117,7 @@ btn_burn.addEventListener('click',e => {
             alert(response['detail']);
         }
         else{
-            createGet(response2 => {
+            createPost(user_components,response2 => {
             console.log(response2);
             if(response2['detail']){
                alert(response2['detail']);
@@ -108,7 +125,7 @@ btn_burn.addEventListener('click',e => {
             else{
                 document.getElementById('flame'+wr_id).style.visibility = 'visible';
             }
-            },"http://127.0.0.1:8000/candle/burn/"+response['id']+"?user_id="+user['id']);
+            },"http://127.0.0.1:8000/candle/burn/"+response['id']);
         }
     },"http://127.0.0.1:8000/candle/get_on_pos_in_user?candle_in_user_interface="+wr_id+"&user_id="+user['id']);
 });
@@ -121,7 +138,7 @@ btn_unburn.addEventListener('click',e => {
             alert(response['detail']);
         }
         else{
-            createGet(response2 => {
+            createPost(user_components,response2 => {
             console.log(response2);
             if(response2['detail']){
                alert(response2['detail']);
@@ -129,7 +146,7 @@ btn_unburn.addEventListener('click',e => {
             else{
                 document.getElementById('flame'+wr_id).style.visibility = 'hidden';
             }
-            },"http://127.0.0.1:8000/candle/unburn/"+response['id']+"?user_id="+user['id']);
+            },"http://127.0.0.1:8000/candle/unburn/"+response['id']);
         }
     },"http://127.0.0.1:8000/candle/get_on_pos_in_user?candle_in_user_interface="+wr_id+"&user_id="+user['id']);
 });
@@ -143,7 +160,7 @@ btn_rem.addEventListener('click',e => {
             alert(response['detail']);
         }
         else{
-            createGet(response2 => {
+            createPost(user_components,response2 => {
             console.log(response2);
             if(response2['detail']){
                alert(response2['detail']);
@@ -152,7 +169,7 @@ btn_rem.addEventListener('click',e => {
                 document.getElementById('candle'+wr_id).style.visibility = 'hidden';
                 document.getElementById('flame'+wr_id).style.visibility = 'hidden';
             }
-            },"http://127.0.0.1:8000/candle/remove/"+response['id']+"?user_id="+user['id']);
+            },"http://127.0.0.1:8000/candle/remove/"+response['id']);
         }
     },"http://127.0.0.1:8000/candle/get_on_pos_in_user?candle_in_user_interface="+wr_id+"&user_id="+user['id']);
 

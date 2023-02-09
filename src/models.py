@@ -32,15 +32,14 @@ class User(BaseModel):
 class History(BaseModel):
     __tablename__ = "history"
 
-    date = Column(DateTime)
+    date_changes = Column(DateTime)
     fild_name = Column(String)
     old_val = Column(String)
     new_val = Column(String)
-
-    user_id = Column(Integer, ForeignKey("users.id"),nullable=False)
+    description = Column(String)
 
     def to_dict(self) -> dict:
-        return {'id': self.id,'date': self.date, 'fild_name': self.fild_name, 'old_val':self.old_val, 'new_val':self.new_val, 'user_id':self.user_id}
+        return {'id': self.id,'date_changes': self.date_changes, 'fild_name': self.fild_name, 'old_val':self.old_val, 'new_val':self.new_val, 'description':self.description}
 
 
 class Candles(BaseModel):

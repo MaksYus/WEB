@@ -101,6 +101,15 @@ def add_role_for_user(user_login:str, role_name:str,db: Session = Depends(get_db
         raise HTTPException(status_code=404, detail="Role not found")
     rfu = schemas.Roles_for_usersBase(user_id = db_user.id, role_id = db_role.id)
     db_role_for_user = crud.create_role_for_user(db,rfu)
+
+    history = schemas.HistoryBase(
+        date_changes = datetime.datetime.now(),
+        fild_name='roles_for_users.id roles_for_users.user_id roles_for_users.role_id',
+        old_val='',
+        new_val=str(db_role_for_user.id)+' '+str(db_role_for_user.user_id)+' '+str(db_role_for_user.role_id),
+        description='adding role to user')
+    histor = crud.create_history(db,history)
+
     return db_role_for_user
 
 @app.post('/user/auth')
@@ -117,7 +126,16 @@ def auth(user: schemas.UserCreate,db: Session = Depends(get_db)):
     if user_db.is_active:
         raise HTTPException(status_code=400, detail="user already logged")
     token = user_db.login + 'FAKETOKEN'
+
+    history = schemas.HistoryBase(
+        date_changes = datetime.datetime.now(),
+        fild_name='users.is_active users.token',
+        old_val=str(user_db.is_active)+' '+user_db.token,
+        new_val='1 '+token,
+        description='user '+ user_db.login +' log in')
+    
     res = crud.update_user(db,user_db.id,hashed_pas,1,token=token)
+    histor = crud.create_history(db,history)
     return res
 
 @app.get('/user/unlog/{token}')
@@ -130,6 +148,15 @@ def unlog(token:str,db:Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="user not found or already logout")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="user already unlogged")
+
+    history = schemas.HistoryBase(
+        date_changes = datetime.datetime.now(),
+        fild_name='users.is_active users.token',
+        old_val=str(user.is_active)+' '+user.token,
+        new_val='0 '+token,
+        description='user '+ user.login +' log out')
+    histor = crud.create_history(db,history)
+
     res = crud.update_user(db,user.id,user.hashed_password,0,user.login)
     return res
 
@@ -141,8 +168,21 @@ def register(new_user: schemas.UserCreate, db:Session = Depends(get_db)):
     if not (user is None):
         raise HTTPException(status_code=400, detail='user already exists')
     us = crud.create_user(db=db,user=new_user)
+
+    history = schemas.HistoryBase(
+        date_changes = datetime.datetime.now(),
+        fild_name='users.id users.login users.hashed_password users.is_active users.token',
+        old_val='',
+        new_val=str(us.id)+' '+us.login+' '+us.hashed_password+' '+str(us.is_active)+' '+us.token,
+        description='user '+ us.login +' registered')
+
     rol = add_role_for_user(user_login=us.login,role_name='User',db=db)
+    histor = crud.create_history(db,history)
     return us
+
+@app.get('/user/components/{id}')
+def get_components(id:int, db:Session = Depends(get_db)):
+    return {'components': get_user_components(db,id)}
 
 @app.get('/candle/all')
 def get_all_candles(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
@@ -161,10 +201,19 @@ def create_candle(new_candle:schemas.CandlesBase,token:str, db:Session = Depends
     if token != user_db.token:
         raise HTTPException(status_code=400, detail= 'token is unvalid')
     res = crud.create_candle(db=db,ca=new_candle)
+
+    history = schemas.HistoryBase(
+        date_changes = datetime.datetime.now(),
+        fild_name='candles.id candles.life_time candles.is_burn candles.date_start candles.candle_type_id candles.user_id candles.in_user_inreface',
+        old_val='',
+        new_val=str(res.id)+' '+str(res.life_time)+' '+str(res.is_burn)+' '+str(res.date_start)+' '+str(res.candle_type_id)+' '+str(res.user_id)+' '+str(res.in_user_interface),
+        description='user '+ user_db.login +' create new candle id:'+str(res.id))
+    histor = crud.create_history(db,history)
+
     return res
 
 @app.post('/candle/add_to_user/') # сразу зажженная
-def add_candle_to_user(new_candle:schemas.CandlesBase,in_user_int:int, db:Session = Depends(get_db)):
+def add_candle_to_user(new_candle:schemas.CandlesBase,components:list,in_user_int:int, db:Session = Depends(get_db)):
     """
     компонент add_candle
     """
@@ -172,9 +221,8 @@ def add_candle_to_user(new_candle:schemas.CandlesBase,in_user_int:int, db:Sessio
     if user is None:
         raise HTTPException(status_code=404, detail='user not found')
     #обработка ролевки
-    components = get_user_components(db,user.id)
     if ('add_candle' not in components):
-        raise HTTPException(status_code=403,detail='deny')
+        raise HTTPException(status_code=403,detail='deny: role access')
     candle = create_candle(new_candle=new_candle,token=user.token,db=db)
     
     user_candles = crud.get_candles_by_user(db,user.id)
@@ -183,66 +231,108 @@ def add_candle_to_user(new_candle:schemas.CandlesBase,in_user_int:int, db:Sessio
             raise HTTPException(status_code=300, detail='cunt past, older candle must be removed')
     
     if ((in_user_int == 1) and ('one_candle' in components)) or ((in_user_int == 2) and ('two_candle' in components)) or ((in_user_int == 3) and ('three_candle' in components)):
+        date_now = datetime.datetime.now()
+        history = schemas.HistoryBase(
+            date_changes = date_now,
+            fild_name='candles.in_user_interface candles.is_burn candles.date_start',
+            old_val=str(candle.in_user_interface)+' '+str(candle.is_burn)+' '+str(candle.date_start),
+            new_val=str(in_user_int)+' 1 '+str(date_now),
+            description='adding candle to user')
+        histor = crud.create_history(db,history)
+
         candle.in_user_interface = in_user_int
         candle.is_burn = 1
-        candle.date_start = datetime.datetime.now()
+        candle.date_start = date_now
+
         return crud.update_candle(db,candle)
     raise HTTPException(status_code=403,detail='deny: in user interface')
     
 
-@app.get('/candle/remove/{candle_id}')
-def remove_candle(candle_id:int,user_id:int, db:Session = Depends(get_db)):
+@app.post('/candle/remove/{candle_id}')
+def remove_candle(candle_id:int,data:dict, db:Session = Depends(get_db)):
     """
     """
     #обработка ролевки
-    components = get_user_components(db,user_id)
-    if ('rem_candle' not in components):
-        raise HTTPException(status_code=403,detail='deny')
+    if ('rem_candle' not in data['components']):
+        raise HTTPException(status_code=403,detail='deny: role access')
 
     ca = crud.get_candle_by_id(db,candle_id)
     if ca is None:
         raise HTTPException(status_code=404, detail='candle not found')
+
+    date_now = datetime.datetime.now()
+    history = schemas.HistoryBase(
+        date_changes = date_now,
+        fild_name='candles.life_time candles.is_burn candles.date_start candles.user_id',
+        old_val=str(ca.life_time)+' '+str(ca.is_burn)+' '+str(ca.date_start)+' '+str(ca.user_id),
+        new_val='0 0 '+str(date_now)+' -1',
+        description='removing candle')
+    histor = crud.create_history(db,history)
+
     ca.life_time = 0
     ca.is_burn = 0
     ca.user_id = -1
-    ca.date_start = datetime.datetime.now()
+    ca.date_start = date_now
     res = crud.update_candle(db,ca)
     return res
 
-@app.get('/candle/burn/{candle_id}')
-def candle_burn(candle_id:int,user_id:int,db:Session = Depends(get_db)):
+@app.post('/candle/burn/{candle_id}')
+def candle_burn(candle_id:int,data:dict,db:Session = Depends(get_db)):
     """
     """
     #обработка ролевки
-    components = get_user_components(db,user_id)
-    if ('burn' not in components):
-        raise HTTPException(status_code=403,detail='deny')
+    if ('burn' not in data['components']):
+        raise HTTPException(status_code=403,detail='deny: role access')
 
     ca = crud.get_candle_by_id(db,candle_id)
     if ca is None:
         raise HTTPException(status_code=404, detail='candle not found')
+
+    if ca.is_burn == 1 :
+        raise HTTPException(status_code=300, detail='candle already burn')
+
+    date_now = datetime.datetime.now()
+    history = schemas.HistoryBase(
+        date_changes = date_now,
+        fild_name='candles.is_burn candles.date_start',
+        old_val=str(ca.is_burn)+' '+str(ca.date_start),
+        new_val='1 '+str(date_now),
+        description='burning candle id:'+str(ca.id))
+    histor = crud.create_history(db,history)
+
     ca.is_burn = 1
-    ca.date_start = datetime.datetime.now()
+    ca.date_start = date_now
     res = crud.update_candle(db,ca)
     return res
 
-@app.get('/candle/unburn/{candle_id}')
-def candle_unburn(candle_id:int,user_id:int, db:Session = Depends(get_db)):
+@app.post('/candle/unburn/{candle_id}')
+def candle_unburn(candle_id:int,data:dict, db:Session = Depends(get_db)):
     """
     """
     #обработка ролевки
-    components = get_user_components(db,user_id)
-    if ('unburn' not in components):
-        raise HTTPException(status_code=403,detail='deny')
+    
+    if ('unburn' not in data['components']):
+        raise HTTPException(status_code=403,detail='deny: role access')
 
     ca = crud.get_candle_by_id(db,candle_id)
     if ca is None:
         raise HTTPException(status_code=404, detail='candle not found')
     if ca.is_burn == 0:
         raise HTTPException(status_code=405, detail='candle already unburn')
-    ca.is_burn = 0
+    
     delta:datetime.timedelta = (datetime.datetime.now() - ca.date_start)
-    ca.life_time -= (delta.days*24*3600 + delta.seconds)
+    new_life_time = ca.life_time - (delta.days*24*3600 + delta.seconds)
+    date_now = datetime.datetime.now()
+    history = schemas.HistoryBase(
+        date_changes = date_now,
+        fild_name='candles.is_burn candles.life_time',
+        old_val=str(ca.is_burn)+' '+str(ca.life_time),
+        new_val='0 '+str(new_life_time),
+        description='burning candle id:'+str(ca.id))
+    histor = crud.create_history(db,history)
+        
+    ca.is_burn = 0
+    ca.life_time = new_life_time
     res = crud.update_candle(db,ca)
     return res
 
@@ -255,3 +345,11 @@ def get_candle_in_user_pos(candle_in_user_interface:int, user_id:int,  db:Sessio
         if candle_intem.in_user_interface == candle_in_user_interface:
             return candle_intem
     raise HTTPException(status_code=404, detail='candles not found')
+
+
+@app.post('/chat/post_message')
+def post_message(data:dict,db:Session = Depends(get_db)):
+    user_db = crud.get_user(db,data['user_id'])
+    if user_db is None:
+        raise HTTPException(status_code=404, detail='user not found')
+    
