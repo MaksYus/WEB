@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import insert
-
+import datetime
 from src import models, schemas
 
 def get_f(item):
@@ -132,6 +132,24 @@ def get_history_all(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.History).offset(skip).limit(limit).all()
 
 def update_history(db:Session,ca: models.History):
+    db.commit()
+    db.refresh(ca)
+    return ca
+
+# MESSAGE
+
+def create_message(db:Session, ca:schemas.MessageBase):
+    db_r = models.Messages(user_id = ca.user_id ,text=ca.text)
+    db_r.date = datetime.datetime.now()
+    db.add(db_r)
+    db.commit()
+    db.refresh(db_r)
+    return db_r
+
+def get_message_all(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Messages).offset(skip).limit(limit).all()
+
+def update_message(db:Session,ca: models.Messages):
     db.commit()
     db.refresh(ca)
     return ca

@@ -89,9 +89,12 @@ class Role_Access(Role_AccessBase):
     class Config:
         orm_mode = True
 
-class Message(BaseModel):
-    id: int
+class MessageBase(BaseModel):
     text: str
     user_id: int
+
+class Message(MessageBase):
+    id: int
+    date: datetime.datetime
     class Config:
         orm_mode = True

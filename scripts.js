@@ -49,7 +49,6 @@ jQuery(document).ready(function($){
             console.log(response);
             if(response['detail']){alert(response['detail']);}
             else{
-                //alert(response['token'])
                 window.location.href = 'main_page.html?token='+response['token'];
             }
         },"http://127.0.0.1:8000/user/auth");

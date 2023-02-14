@@ -42,7 +42,7 @@ def get_user_components(db:Session, user_id:int):
     components = []
     user_roles = crud.get_user_roles(db,user_id)
     for item in user_roles:
-        components_id = crud.get_components_id_by_role(db,item.id)
+        components_id = crud.get_components_id_by_role(db,item.role_id)
         for comp_id in components_id:
             comp = crud.get_component(db,comp_id.id)
             components.append(comp.name)
@@ -133,9 +133,9 @@ def auth(user: schemas.UserCreate,db: Session = Depends(get_db)):
         old_val=str(user_db.is_active)+' '+user_db.token,
         new_val='1 '+token,
         description='user '+ user_db.login +' log in')
-    
-    res = crud.update_user(db,user_db.id,hashed_pas,1,token=token)
     histor = crud.create_history(db,history)
+    res = crud.update_user(db,user_db.id,hashed_pas,1,token=token)
+    
     return res
 
 @app.get('/user/unlog/{token}')
@@ -175,9 +175,9 @@ def register(new_user: schemas.UserCreate, db:Session = Depends(get_db)):
         old_val='',
         new_val=str(us.id)+' '+us.login+' '+us.hashed_password+' '+str(us.is_active)+' '+us.token,
         description='user '+ us.login +' registered')
-
-    rol = add_role_for_user(user_login=us.login,role_name='User',db=db)
     histor = crud.create_history(db,history)
+    rol = add_role_for_user(user_login=us.login,role_name='User',db=db)
+    
     return us
 
 @app.get('/user/components/{id}')
@@ -249,11 +249,11 @@ def add_candle_to_user(new_candle:schemas.CandlesBase,components:list,in_user_in
     
 
 @app.post('/candle/remove/{candle_id}')
-def remove_candle(candle_id:int,data:dict, db:Session = Depends(get_db)):
+def remove_candle(candle_id:int,components:list, db:Session = Depends(get_db)):
     """
     """
     #обработка ролевки
-    if ('rem_candle' not in data['components']):
+    if ('rem_candle' not in components):
         raise HTTPException(status_code=403,detail='deny: role access')
 
     ca = crud.get_candle_by_id(db,candle_id)
@@ -277,11 +277,11 @@ def remove_candle(candle_id:int,data:dict, db:Session = Depends(get_db)):
     return res
 
 @app.post('/candle/burn/{candle_id}')
-def candle_burn(candle_id:int,data:dict,db:Session = Depends(get_db)):
+def candle_burn(candle_id:int,components:list,db:Session = Depends(get_db)):
     """
     """
     #обработка ролевки
-    if ('burn' not in data['components']):
+    if ('burn' not in components):
         raise HTTPException(status_code=403,detail='deny: role access')
 
     ca = crud.get_candle_by_id(db,candle_id)
@@ -306,12 +306,12 @@ def candle_burn(candle_id:int,data:dict,db:Session = Depends(get_db)):
     return res
 
 @app.post('/candle/unburn/{candle_id}')
-def candle_unburn(candle_id:int,data:dict, db:Session = Depends(get_db)):
+def candle_unburn(candle_id:int,components:list, db:Session = Depends(get_db)):
     """
     """
     #обработка ролевки
     
-    if ('unburn' not in data['components']):
+    if ('unburn' not in components):
         raise HTTPException(status_code=403,detail='deny: role access')
 
     ca = crud.get_candle_by_id(db,candle_id)
@@ -346,10 +346,18 @@ def get_candle_in_user_pos(candle_in_user_interface:int, user_id:int,  db:Sessio
             return candle_intem
     raise HTTPException(status_code=404, detail='candles not found')
 
-
 @app.post('/chat/post_message')
-def post_message(data:dict,db:Session = Depends(get_db)):
-    user_db = crud.get_user(db,data['user_id'])
+def post_message(data:schemas.MessageBase,components:list, db:Session = Depends(get_db)):
+    user_db = crud.get_user(db,data.user_id)
     if user_db is None:
         raise HTTPException(status_code=404, detail='user not found')
-    
+    #обработка ролевки
+    if ('post_message' not in components):
+        raise HTTPException(status_code=403,detail='deny: role access')
+    add_message = crud.create_message(db,data)
+    return add_message
+
+@app.get('/chat/get_top_5/')
+def get_top_five_messages(db:Session=Depends(get_db)):
+    messages = crud.get_message_all(db,0,-1)
+    return messages[len(messages)-5:len(messages)]

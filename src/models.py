@@ -96,3 +96,13 @@ class Role_Access(BaseModel):
     component_id = Column(Integer,ForeignKey("component.id"),nullable=False)
     def to_dict(self) -> dict:
         return {'id': self.id,'role_id': self.role_id, 'component_id': self.component_id}
+
+class Messages(BaseModel):
+    __tablename__ = "msesages"
+
+    user_id = Column(Integer, ForeignKey("users.id"))
+    date = Column(DateTime,index=True)
+    text = Column(String)
+
+    def to_dict(self) -> dict:
+        return {'id': self.id,'user_id': self.user_id,'date':self.date, 'text': self.text}
